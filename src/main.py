@@ -1,10 +1,16 @@
 import datetime
 from fastapi import FastAPI 
 from rx.subject import Subject
+import os
 from models.monobank import MonobankTransaction, FinancialTransaction
+from dotenv import load_dotenv
+from pymongo import MongoClient
+import json
+
+load_dotenv()
 
 app = FastAPI()
-
+db = MongoClient(os.getenv("MONGO_CONNECTION")).get_default_database()
 mono_sub = Subject()
 
 @app.get("/api/version")
@@ -20,7 +26,8 @@ mono_sub.subscribe(on_next=lambda transaction: on_message(transaction))
 
 def on_message(monobankTransaction: MonobankTransaction):
     transaction = map(monobankTransaction)
-    print(transaction)
+    bson = json.loads(transaction.json())
+    db["test-13"].insert_one(bson)
 
 def map(monobankTransaction: MonobankTransaction):
     transaction = FinancialTransaction( amount=abs(monobankTransaction.data.statementItem.amount) / 100, 
@@ -28,3 +35,4 @@ def map(monobankTransaction: MonobankTransaction):
         date=datetime.datetime.utcfromtimestamp(monobankTransaction.data.statementItem.time),
         comments=monobankTransaction.data.statementItem.comment )
     return transaction
+
