@@ -8,6 +8,7 @@ fastapi = "*"
 rx = "*"
 pymongo = "*"
 dnspython = "*"
+python-multipart = "*"
 
 [dev-packages]
 
