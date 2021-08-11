@@ -4,18 +4,16 @@ from typing import Optional
 from fastapi import FastAPI, Header, UploadFile
 from fastapi.param_functions import File
 from rx.subject import Subject
-import os
 from models.monobank import MonobankTransaction, FinancialTransaction
-from dotenv import load_dotenv
 from pymongo import MongoClient
 import json
 import csv
 from io import StringIO
-
-load_dotenv()
+from settings.app_settings import get_configuration
 
 app = FastAPI()
-db = MongoClient(os.getenv("MONGO_CONNECTION")).get_default_database()
+configuration = get_configuration()
+db = MongoClient(configuration.MONGO_CONNECTION_STRING).get_default_database()
 mono_sub = Subject()
 
 @app.get("/api/version")
@@ -44,7 +42,7 @@ async def import_csv(app: Optional[str] = "Spendee",
             amount=abs( float(row["Amount"])), comments=row["Note"], title=row["Category name"])
         records.append(json.loads(record.json()))
    
-    db["tes111"].insert_many(records)
+    db[configuration.MONGO_FINANCIAL_TRANSACTION_COLLECTION].insert_many(records)
 
     return { "app": app, "telegram_user_id": telegram_user_id }
 
@@ -53,7 +51,7 @@ mono_sub.subscribe(on_next=lambda transaction: on_message(transaction))
 def on_message(monobankTransaction: MonobankTransaction):
     transaction = map(monobankTransaction)
     bson = json.loads(transaction.json())
-    db["test-13"].insert_one(bson)
+    db[configuration.MONGO_FINANCIAL_TRANSACTION_COLLECTION].insert_one(bson)
 
 def map(monobankTransaction: MonobankTransaction):
     transaction = FinancialTransaction( amount=abs(monobankTransaction.data.statementItem.amount) / 100, 
