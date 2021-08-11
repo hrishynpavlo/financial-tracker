@@ -5,15 +5,16 @@ from fastapi import FastAPI, Header, UploadFile
 from fastapi.param_functions import File
 from rx.subject import Subject
 from models.monobank import MonobankTransaction, FinancialTransaction
-from pymongo import MongoClient
 import json
 import csv
 from io import StringIO
 from settings.app_settings import get_configuration
+from db.db import get_db
 
 app = FastAPI()
 configuration = get_configuration()
-db = MongoClient(configuration.MONGO_CONNECTION_STRING).get_default_database()
+
+db = get_db(configuration)
 mono_sub = Subject()
 
 @app.get("/api/version")
