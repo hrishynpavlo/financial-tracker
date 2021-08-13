@@ -9,6 +9,7 @@ rx = "*"
 pymongo = "*"
 dnspython = "*"
 python-multipart = "*"
+aiohttp = {extras = ["speedups"], version = "*"}
 
 [dev-packages]
 
